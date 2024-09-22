@@ -103,7 +103,23 @@ for i in range(0,rows):
                         id = dfsg.loc[idCode, 'Unnamed: 21']   
                         option_lst = []
                         checkboxlst = list(map(str,cell.text.split('\n')))
-                        option_lst = []    
+                        option_lst = [] 
+                        for j in checkboxlst:
+                            times = j.count('□')
+                            temlst = []
+                            for k in range(times):
+                                option_not_edit = j[len(j)-j[::-1].index('□')-1:]
+                                squard , option = option_not_edit[:1],option_not_edit[1:]
+                                if k == 0 :
+                                    option +='\n'
+                                temlst.append([squard,option])
+                                j = j.replace(option_not_edit,'')
+                            temlst = temlst[::-1]
+                            for x in temlst :
+                                option_lst.append(x)
+                        
+
+                                # item[len(item)-item[::-1].index('□')-1:]
                     # elif nowcommend =='報檢職類':
                     #     checkboxlst = list(map(str,cell.text.split('\n')))
                     #     optionlst = []
