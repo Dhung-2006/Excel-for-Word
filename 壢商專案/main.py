@@ -100,7 +100,10 @@ for i in range(0,rows):
                         reCell.text = str(df.loc[i, '班別'])
                     elif nowcommend == '身分別(一般報檢人免填)':
                         idCode = df.loc[i,'特定對象身份別']
-                        id = dfsg.loc[idCode, 'Unnamed: 21']
+                        id = dfsg.loc[idCode, 'Unnamed: 21']   
+                        option_lst = []
+                        checkboxlst = list(map(str,cell.text.split('\n')))
+                        option_lst = []    
                     # elif nowcommend =='報檢職類':
                     #     checkboxlst = list(map(str,cell.text.split('\n')))
                     #     optionlst = []
