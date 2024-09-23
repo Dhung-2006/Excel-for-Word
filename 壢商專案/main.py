@@ -5,6 +5,10 @@ from docx.shared import Pt
 from docx.oxml.ns import qn
 from docx.enum.text import WD_LINE_SPACING
 from docx.shared import Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
+from docx.shared import Pt
 worddic={'身分證號碼':'身分證號',
          '中文姓名':'姓名',
          '出生日期':'出生日期',
@@ -48,6 +52,9 @@ stu = np.insert(only_string,0,0)
 #---------------------------------------------------------------------------------
 #特定對象
 dfsg = pd.read_excel('1.中壢高商(14901).xlsx',sheet_name='代號',usecols=[20,21],index_col=0, nrows = 8)
+#---------------------------------------------------------------------------------
+#套印用資料-全測
+
 #---------------------------------------------------------------------------------
 #word讀取 & 填寫
 for i in range(0,rows):
@@ -99,27 +106,59 @@ for i in range(0,rows):
                         reCell  = table.cell(idxr+1 , idxc-1)
                         reCell.text = str(df.loc[i, '班別'])
                     elif nowcommend == '身分別(一般報檢人免填)':
-                        idCode = df.loc[i,'特定對象身份別']
-                        id = dfsg.loc[idCode, 'Unnamed: 21']   
-                        option_lst = []
-                        checkboxlst = list(map(str,cell.text.split('\n')))
-                        option_lst = [] 
-                        for j in checkboxlst:
-                            times = j.count('□')
-                            temlst = []
-                            for k in range(times):
-                                option_not_edit = j[len(j)-j[::-1].index('□')-1:]
-                                squard , option = option_not_edit[:1],option_not_edit[1:]
-                                if k == 0 :
-                                    option +='\n'
-                                temlst.append([squard,option])
-                                j = j.replace(option_not_edit,'')
-                            temlst = temlst[::-1]
-                            for x in temlst :
-                                option_lst.append(x)
-                        
-
-                                # item[len(item)-item[::-1].index('□')-1:]
+                        idCode =str(df.loc[i,'特定對象身份別'])
+                        if idCode != 'nan':
+                            id = dfsg.loc[float(idCode), 'Unnamed: 21']
+                            checkboxlst = list(map(str,cell.text.split('\n')))
+                            cell.text = ''
+                            option_lst = [] 
+                            paragraph = cell.paragraphs[0]
+                            paragraph_format = paragraph.paragraph_format
+                            paragraph_format.line_spacing = Pt(9)
+                            underline_option = ''
+                            for j in checkboxlst:
+                                times = j.count('□')
+                                temlst = []
+                                if times == 0 :
+                                    underline_option +=j +'\n'
+                                    option_lst.append([j,'\n'])
+                                else:
+                                    for k in range(times):
+                                        option_not_edit = j[len(j)-j[::-1].index('□')-1:]
+                                        squard , option = option_not_edit[:1],option_not_edit[1:]
+                                        if k == 0 :
+                                            option +='\n'
+                                        temlst.append([squard,option])
+                                        j = j.replace(option_not_edit,'')
+                                temlst = temlst[::-1]
+                                for x in temlst :
+                                    option_lst.append(x)
+                            for option in option_lst:
+                                if id in option[1]:
+                                    option[0] = '■'
+                                    break
+                            response = ''
+                            for res in option_lst:
+                                run = paragraph.add_run(res[0])
+                                run.font.size = Pt(7.8)
+                                run.font.name = '標楷體'
+                                run._element.rPr.rFonts.set(qn('w:eastAsia'), '標楷體')
+                                run2 = paragraph.add_run(res[1])
+                                run2.font.size = Pt(7.8)
+                                run2.font.name ='Times New Roman'  
+                                run2._element.rPr.rFonts.set(qn('w:eastAsia'), '標楷體')     
+                                if '限以上身分，需另填寫補助申請書，不申請補助者免附' in res[0]:
+                                    run3 = paragraph.add_run('————————————————————\n') 
+                                    run3.font.name ='Times New Roman'  
+                                    run3._element.rPr.rFonts.set(qn('w:eastAsia'), 'Times New Roman')             
+                                    rPr2 = run3._element.get_or_add_rPr()
+                                    spacing = OxmlElement('w:spacing')
+                                    spacing.set(qn('w:val'), '0.5')  
+                                    rPr2.append(spacing)
+                                rPr = run2._element.get_or_add_rPr()
+                                spacing = OxmlElement('w:spacing')
+                                spacing.set(qn('w:val'), '0.5')  
+                                rPr.append(spacing)
                     # elif nowcommend =='報檢職類':
                     #     checkboxlst = list(map(str,cell.text.split('\n')))
                     #     optionlst = []
