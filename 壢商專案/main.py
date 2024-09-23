@@ -23,7 +23,7 @@ worddic={'身分證號碼':'身分證號',
          '上課別':'部別'
          }
 #讀取主要資料
-df = pd.read_excel('1.中壢高商(14901).xlsx', sheet_name='Data-全測', skiprows=2)
+df = pd.read_excel('1.中壢高商(14901).xlsx', sheet_name='Data-全測',skiprows=2)
 rows = df.shape[0]
 #--------------------------------------------------------------------------------
 #讀取&儲存科系資料
@@ -53,8 +53,15 @@ stu = np.insert(only_string,0,0)
 #特定對象
 dfsg = pd.read_excel('1.中壢高商(14901).xlsx',sheet_name='代號',usecols=[20,21],index_col=0, nrows = 8)
 #---------------------------------------------------------------------------------
+#測驗類別
+dftp = pd.read_excel('1.中壢高商(14901).xlsx',sheet_name='代號',usecols=[14,15],index_col=0, nrows = 13 )
+text_values = dftp.values
+is_string =np.vectorize(lambda x: isinstance(x, str))(text_values).astype(bool)
+only_string = text_values[is_string]
+test_type_lst = np.insert(only_string,0,0)
+#---------------------------------------------------------------------------------
 #套印用資料-全測
-
+df_print = pd.read_excel('1.中壢高商(14901).xlsx', sheet_name='套印用資料-全測')
 #---------------------------------------------------------------------------------
 #word讀取 & 填寫
 for i in range(0,rows):
@@ -75,7 +82,7 @@ for i in range(0,rows):
                             for run in paragraph.runs:
                                 run.clear()
                             #---------------------------------------------------------------------------------
-                            run2 = paragraph.add_run(str(df.loc[i, worddic[nowcommend]]))  # 這是新插入的部分
+                            run2 = paragraph.add_run(df.loc[i, worddic[nowcommend]])  
                             run2.font.size = Pt(12)  # 設置字體大小 
                             run2.font.name = 'Times New Roman'
                             run2._element.rPr.rFonts.set(qn('w:eastAsia'), 'Times New Roman')
@@ -159,18 +166,60 @@ for i in range(0,rows):
                                 spacing = OxmlElement('w:spacing')
                                 spacing.set(qn('w:val'), '0.5')  
                                 rPr.append(spacing)
-                    # elif nowcommend =='報檢職類':
-                    #     checkboxlst = list(map(str,cell.text.split('\n')))
-                    #     optionlst = []
-                        #---------------------------------------------------------------------------------
-                        #分割checkbox 與選項內容
-                        # for item in checkboxlst:
-                        #     optionA,optionB  = item[:len(item)-(item[::-1].index('□'))-1],item[len(item)-item[::-1].index('□')-1:]
-                        #     for i in optionA,optionB:
-                        #         squard = i[:1]
-                        #         content = i[1:]
-                        #         optionlst.append([squard,content])
-                        #---------------------------------------------------------------------------------
+                    elif nowcommend =='報檢職類':
+                        id_type = int(df_print.loc[i,'測驗類別'])
+                        test_type = test_type_lst[id_type]
+                        checkboxlst = list(map(str,cell.text.split('\n')))
+                        option_lst = []
+                        cell.text = ''
+                        paragraph = cell.paragraphs[0]
+                       # ---------------------------------------------------------------------------------
+                       # 分割checkbox 與選項內容
+                        for j in checkboxlst:
+                                times = j.count('□')
+                                temlst = []
+                                if times == 0 :
+                                    underline_option +=j +'\n' 
+                                    option_lst.append([j,'\n'])
+                                else:
+                                    for k in range(times):
+                                        option_not_edit = j[len(j)-j[::-1].index('□')-1:]
+                                        squard , option = option_not_edit[:1],option_not_edit[1:]
+                                        if k == 0 :
+                                            option +='\n'
+                                        temlst.append([squard,option])
+                                        j = j.replace(option_not_edit,'')
+                                temlst = temlst[::-1]
+                                for x in temlst :
+                                    option_lst.append(x)
+                        for res in option_lst:
+                            if test_type in res[1]:
+                                res[0] = '■'
+                                break
+                        for res in option_lst:
+                                run = paragraph.add_run(res[0])
+                                run.font.size = Pt(12)
+                                run.font.name = '標楷體'
+                                run._element.rPr.rFonts.set(qn('w:eastAsia'), '標楷體')
+                                run2 = paragraph.add_run(res[1])
+                                run2.font.size = Pt(12)
+                                run2.font.name ='Arial'  
+                                run2._element.rPr.rFonts.set(qn('w:eastAsia'), '標楷體')  
+                                rPr = run._element.get_or_add_rPr()
+                                spacing = OxmlElement('w:spacing')
+                                spacing.set(qn('w:val'), '0')  
+                                rPr.append(spacing)
+                                rPr = run2._element.get_or_add_rPr()
+                                spacing = OxmlElement('w:spacing')
+                                spacing.set(qn('w:val'), '0')  
+                                rPr.append(spacing) 
+                                tr = row._element  # 获取表格行的 XML 元素
+                                # trPr = tr.get_or_add_trPr()  # 获取或创建 trPr 元素
+                                # trHeight = OxmlElement('w:trHeight')  # 创建行高元素
+                                # trHeight.set('w:val', '400')  # 设置行高，单位是1/20磅，400表示20磅的行高
+                                # trHeight.set('w:hRule', 'exact')  # 设置为 exact 表示固定行高
+                                # trPr.append(trHeight)  # 添加到行属性中  
+                       # ---------------------------------------------------------------------------------
                     # elif '實貼身分證【正面】' in nowcommend:
                     testset.add(cell.text)
                     nowcommend = cell.text
