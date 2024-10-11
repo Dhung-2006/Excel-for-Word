@@ -10,16 +10,7 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 from docx.shared import Pt
 from docx.shared import Cm
-from pathlib import Path
-import comtypes.client
 from docx2pdf import convert
-from pypdf import PdfWriter
-def merge_pdfs(pdf_list, output_path):
-    pdf_merger = PdfWriter()  
-    for pdf in pdf_list:
-        pdf_merger.append(pdf)  
-    with open(output_path, 'wb') as output_file:
-        pdf_merger.write(output_file)
 worddic={'身分證號碼':'身分證號',
          '中文姓名':'姓名',
          '出生日期':'出生日期',
@@ -83,6 +74,7 @@ study_type_list = np.insert(only_string,0,0)
 #---------------------------------------------------------------------------------
 #word讀取 & 填寫
 file_lst = []
+
 for i in range(0,rows):
     school_id  ='0'+str(df_print.loc[i,'學號'])
     doc = Document('5.報名表正面.docx')
@@ -396,7 +388,4 @@ for i in range(0,rows):
                          break
     new_file_path = school_id+'.docx'
     doc.save('./alreadyPDF/'+new_file_path) 
-    convert('./alreadyPDF/'+new_file_path,'./alreadyPDF/'+school_id+'.pdf')
-    file_lst.append('./alreadyPDF/'+school_id+'.pdf')
-output_pdf = 'final.pdf'
-merge_pdfs(file_lst, output_pdf)
+    convert('./alreadyPDF/'+new_file_path)
